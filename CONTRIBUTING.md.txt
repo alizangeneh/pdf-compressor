@@ -1,0 +1,14 @@
+# Contributing to Smart PDF Compressor
+
+## Reporting Bugs
+- Use a clear and descriptive title.
+- Include environment info: Python version and package versions.
+
+## Proposing Features
+- Open an Issue first describing your idea.
+- Submit Pull Request with a new branch: feature/your-feature.
+
+## Pull Request Guidelines
+- Follow PEP8 code style.
+- Include docstrings for new functions/classes.
+- Ensure all tests pass.

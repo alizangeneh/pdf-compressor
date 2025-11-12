@@ -1,0 +1,9 @@
+pycache/
+*.pyc
+*.pyo
+*.pyd
+.vscode/
+.idea/
+dist/
+build/
+*.egg-info/

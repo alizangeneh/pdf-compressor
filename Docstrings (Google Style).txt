@@ -1,0 +1,20 @@
+class PDFCompressorApp:
+    """
+    GUI application for compressing PDF files.
+
+    Attributes:
+        pdf_files (list): List of selected PDF file paths.
+        cancel_flag (bool): Flag to stop processing.
+    """
+
+    def add_files(self, files: list) -> None:
+        """
+        Add PDF files to the list.
+
+        Args:
+            files (list): List of PDF file paths.
+
+        Returns:
+            None
+        """
+        ...
