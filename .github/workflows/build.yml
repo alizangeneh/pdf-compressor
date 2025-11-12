@@ -2,7 +2,7 @@ name: Build and Release PDF Compressor
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
@@ -19,39 +19,77 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: 3.11
+          python-version: '3.11'
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pillow pymupdf tkinterdnd2 pyinstaller py2app
+          pip install pillow pymupdf pyinstaller tkinterdnd2 py2app
 
-      - name: Build PDF Compressor
+      - name: Build Windows executable
+        if: runner.os == 'Windows'
         run: |
-          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-            pyinstaller --onefile main.py
-          elif [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
-            pyinstaller --onefile main.py
-          elif [[ "${{ matrix.os }}" == "macos-latest" ]]; then
-            python3 setup.py py2app
+          pyinstaller --onefile main.py
+          mkdir -p build_output
+          move dist\main.exe build_output\PDFCompressor-Windows.exe
 
-      - name: Create artifact directory
-        run: mkdir -p dist/${{ matrix.os }}
-
-      - name: Move executables to dist folder
+      - name: Build Linux executable
+        if: runner.os == 'Linux'
         run: |
-          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-            mv dist/main.exe dist/windows/
-          elif [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
-            mv dist/main dist/ubuntu/
-          elif [[ "${{ matrix.os }}" == "macos-latest" ]]; then
-            mv dist/*.app dist/macos/
+          pyinstaller --onefile main.py
+          mkdir -p build_output
+          mv dist/main build_output/PDFCompressor-Linux
 
-      - name: Upload Release Asset
-        uses: ncipollo/release-action@v1
+      - name: Build macOS executable
+        if: runner.os == 'macOS'
+        run: |
+          python3 setup.py py2app
+          mkdir -p build_output
+          mv dist/main.app build_output/PDFCompressor-macOS.app
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
         with:
-          tag: v1.0.0
-          files: |
-            dist/windows/main.exe
-            dist/ubuntu/main
-            dist/macos/*.app
+          name: executables-${{ runner.os }}
+          path: build_output/
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Windows build
+        uses: actions/download-artifact@v3
+        with:
+          name: executables-Windows
+          path: build_output/
+
+      - name: Download Linux build
+        uses: actions/download-artifact@v3
+        with:
+          name: executables-Linux
+          path: build_output/
+
+      - name: Download macOS build
+        uses: actions/download-artifact@v3
+        with:
+          name: executables-macOS
+          path: build_output/
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v1.0.${{ github.run_number }}
+          name: PDF Compressor v1.0.${{ github.run_number }}
+          body: Release of PDF Compressor executables
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload executables to release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: build_output/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
