@@ -1,12 +1,13 @@
-name: Build and Release PDF Compressor
+name: Build & Release Smart PDF Compressor
 
 on:
   push:
-    branches: [ main ]
-  workflow_dispatch:
+    tags:
+      - "v*"
 
 jobs:
   build:
+    name: Build executables for ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -14,82 +15,58 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pillow pymupdf pyinstaller tkinterdnd2 py2app
+          pip install -r requirements.txt || true
+          pip install pyinstaller
+          if [[ "${{ matrix.os }}" == "macos-latest" ]]; then
+            pip install py2app
+          fi
 
-      - name: Build Windows executable
-        if: runner.os == 'Windows'
+      - name: Build executable
+        shell: bash
         run: |
-          pyinstaller --onefile main.py
-          mkdir -p build_output
-          move dist\main.exe build_output\PDFCompressor-Windows.exe
+          mkdir -p dist
+          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+            pyinstaller --onefile --windowed main.py -n PDFCompressor
+          elif [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
+            pyinstaller --onefile main.py -n PDFCompressor
+          elif [[ "${{ matrix.os }}" == "macos-latest" ]]; then
+            python setup.py py2app --app=main.py
+          fi
 
-      - name: Build Linux executable
-        if: runner.os == 'Linux'
-        run: |
-          pyinstaller --onefile main.py
-          mkdir -p build_output
-          mv dist/main build_output/PDFCompressor-Linux
-
-      - name: Build macOS executable
-        if: runner.os == 'macOS'
-        run: |
-          python3 setup.py py2app
-          mkdir -p build_output
-          mv dist/main.app build_output/PDFCompressor-macOS.app
-
-      - name: Upload artifacts
+      - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: executables-${{ runner.os }}
-          path: build_output/
+          name: PDFCompressor-${{ matrix.os }}
+          path: |
+            dist/**
+            build/**
 
   release:
+    name: Create GitHub Release
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
     steps:
-      - name: Download Windows build
+      - name: Download all build artifacts
         uses: actions/download-artifact@v4
         with:
-          name: executables-Windows
-          path: build_output/
+          path: ./dist
 
-      - name: Download Linux build
-        uses: actions/download-artifact@v4
+      - name: Create Release and Upload Files
+        uses: softprops/action-gh-release@v2
         with:
-          name: executables-Linux
-          path: build_output/
-
-      - name: Download macOS build
-        uses: actions/download-artifact@v4
-        with:
-          name: executables-macOS
-          path: build_output/
-
-      - name: Create GitHub Release
-        id: create_release
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: v1.0.${{ github.run_number }}
-          name: PDF Compressor v1.0.${{ github.run_number }}
-          body: Release of PDF Compressor executables
-          draft: false
-          prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload executables to release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: build_output/*
+          files: dist/**/* 
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
