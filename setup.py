@@ -3,7 +3,7 @@ from setuptools import setup
 APP = ['main.py']
 OPTIONS = {
     'argv_emulation': True,
-    'packages': ['tkinter', 'PIL', 'fitz', 'tkinterdnd2'],
+    'packages': ['PIL', 'pymupdf', 'tkinterdnd2'],
 }
 
 setup(
