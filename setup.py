@@ -4,7 +4,7 @@ setup(
     name="pdf-compressor",
     version="1.0.0",
     author="Ali Zangeneh",
-    author_email="your_email@example.com",  # اختیاری
+    author_email="your_email@example.com",
     description="Smart PDF compressor for both image and vector PDFs",
     long_description=open("README.md", encoding="utf-8").read(),
     long_description_content_type="text/markdown",
@@ -19,9 +19,10 @@ setup(
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
-        "Operating System :: Microsoft :: Windows",
+        "Operating System :: MacOS",
         "Topic :: Utilities",
         "Intended Audience :: Developers",
     ],
     python_requires=">=3.9",
+    app=['main.py'],  # << مهم برای py2app
 )

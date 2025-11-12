@@ -1,4 +1,4 @@
-name: Build and Release PDFCompressor
+name: Build PDFCompressor Executables
 
 on:
   push:
@@ -8,20 +8,19 @@ on:
 
 jobs:
   build:
-    name: Build PDFCompressor for ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [windows-latest, macos-latest, ubuntu-latest]
+        os: [windows-latest, ubuntu-latest, macos-latest]
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: 3.11
 
       - name: Install dependencies
         run: |
@@ -29,34 +28,18 @@ jobs:
           pip install -r requirements.txt
           pip install pyinstaller py2app
 
-      - name: Read version from setup.py
-        id: version
+      - name: Build executable
         run: |
-          version=$(python -c "import re; f=open('setup.py').read(); print(re.search(r'version=\"([0-9\.]+)\"', f).group(1))")
-          echo "version=$version" >> $GITHUB_ENV
+          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+              pyinstaller --onefile main.py
+          elif [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
+              pyinstaller --onefile main.py
+          elif [[ "${{ matrix.os }}" == "macos-latest" ]]; then
+              python setup.py py2app
 
-      - name: Build executable (Windows)
-        if: matrix.os == 'windows-latest'
-        run: |
-          pyinstaller --onefile main.py --name PDFCompressor-${{ env.version }}.exe
-          mkdir -p dist
-          move dist\PDFCompressor-${{ env.version }}.exe dist\
-
-      - name: Build executable (macOS)
-        if: matrix.os == 'macos-latest'
-        run: |
-          python setup.py py2app
-          mv dist PDFCompressor-${{ env.version }}-macOS
-
-      - name: Build executable (Linux)
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          pyinstaller --onefile main.py --name PDFCompressor-${{ env.version }}
-          mkdir -p dist
-
-      - name: Upload artifacts
+      - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: PDFCompressor-${{ env.version }}-${{ matrix.os }}
+          name: PDFCompressor-${{ matrix.os }}
           path: |
             dist/*
