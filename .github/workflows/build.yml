@@ -1,60 +1,62 @@
-name: Build PDFCompressor Executables
+name: Build and Release PDFCompressor
 
 on:
   push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+    branches:
+      - main
+  workflow_dispatch:
 
 jobs:
   build:
+    name: Build PDFCompressor for ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [windows-latest, macos-latest, ubuntu-latest]
 
-    runs-on: ${{ matrix.os }}
-
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: "3.11"
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install PyMuPDF Pillow tkinterdnd2 pyinstaller
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller py2app
 
-    - name: Install py2app (macOS only)
-      if: runner.os == 'macOS'
-      run: pip install py2app
+      - name: Read version from setup.py
+        id: version
+        run: |
+          version=$(python -c "import re; f=open('setup.py').read(); print(re.search(r'version=\"([0-9\.]+)\"', f).group(1))")
+          echo "version=$version" >> $GITHUB_ENV
 
-    - name: Install Xcode CLI (macOS only)
-      if: runner.os == 'macOS'
-      run: sudo xcode-select --install || true
+      - name: Build executable (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          pyinstaller --onefile main.py --name PDFCompressor-${{ env.version }}.exe
+          mkdir -p dist
+          move dist\PDFCompressor-${{ env.version }}.exe dist\
 
-    - name: List files for debug
-      run: ls -la
+      - name: Build executable (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          python setup.py py2app
+          mv dist PDFCompressor-${{ env.version }}-macOS
 
-    - name: Build executable (Windows/Linux)
-      if: runner.os != 'macOS'
-      run: |
-        mkdir -p dist
-        pyinstaller --onefile main.py --name PDFCompressor
+      - name: Build executable (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          pyinstaller --onefile main.py --name PDFCompressor-${{ env.version }}
+          mkdir -p dist
 
-    - name: Build executable (macOS)
-      if: runner.os == 'macOS'
-      run: |
-        python setup.py py2app
-
-    - name: Upload artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: PDFCompressor-${{ matrix.os }}
-        path: |
-          dist/
-          build/
-          PDFCompressor.app
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: PDFCompressor-${{ env.version }}-${{ matrix.os }}
+          path: |
+            dist/*
