@@ -50,10 +50,10 @@ def is_raster_pdf(path):
     except:
         return True
 
-# ---------- Compress Raster PDFs ----------
+# ---------- Compress Raster (Image-based) PDFs ----------
 def compress_raster_pdf(input_path, output_path, dpi, cancel_flag):
     """
-    Compress raster PDFs by converting pages to images with the specified DPI.
+    Compresses raster PDFs by re-rendering each page as a lower-DPI image.
     """
     try:
         doc = fitz.open(input_path)
@@ -85,7 +85,7 @@ def compress_raster_pdf(input_path, output_path, dpi, cancel_flag):
 # ---------- Compress Vector PDFs using Ghostscript ----------
 def compress_vector_pdf(input_path, output_path, cancel_flag, quality="ebook"):
     """
-    Compress vector (selectable) PDFs using Ghostscript.
+    Compresses vector (selectable text) PDFs using Ghostscript.
     """
     try:
         if cancel_flag():
@@ -107,7 +107,7 @@ def compress_vector_pdf(input_path, output_path, cancel_flag, quality="ebook"):
         print(f"Error compressing vector PDF {input_path}: {e}")
         return False
 
-# ---------- Main Application ----------
+# ---------- Main Application Class ----------
 class PDFCompressorApp:
     def __init__(self, root):
         self.root = root
@@ -117,7 +117,7 @@ class PDFCompressorApp:
         self.pdf_files = []
         self.cancel_flag = False
 
-        # --- File Section ---
+        # --- File Selection Section ---
         file_frame = tk.LabelFrame(root, text="Select or Drop PDF Files")
         file_frame.pack(fill="x", padx=10, pady=5)
         self.listbox = tk.Listbox(file_frame, height=6, selectmode=tk.EXTENDED)
@@ -130,7 +130,7 @@ class PDFCompressorApp:
         tk.Button(btn_frame, text="Browse", command=self.add_files_dialog).pack(side="left", padx=5)
         tk.Button(btn_frame, text="Delete Selected", command=self.delete_selected).pack(side="left", padx=5)
 
-        # --- DPI Section ---
+        # --- DPI Options ---
         dpi_frame = tk.LabelFrame(root, text="DPI Settings")
         dpi_frame.pack(fill="x", padx=10, pady=5)
         self.dpi_choice = tk.StringVar(value="Screen 72 dpi")
@@ -143,7 +143,7 @@ class PDFCompressorApp:
                                label="Manual DPI", state="disabled", command=self.set_manual_dpi)
         self.slider.pack(fill="x", padx=10)
 
-        # --- Control Buttons & Progress ---
+        # --- Control Buttons and Progress Bar ---
         control = tk.Frame(root)
         control.pack(fill="x", padx=10, pady=10)
         self.process_btn = tk.Button(control, text="Process", command=self.start_process)
@@ -155,7 +155,7 @@ class PDFCompressorApp:
         self.status = tk.Label(root, text="Ready", anchor="w")
         self.status.pack(fill="x", padx=10)
 
-        # --- GitHub Info Label (Help) ---
+        # --- GitHub Info Label (Help Button) ---
         help_label = tk.Label(root, text="❓", fg="blue", cursor="hand2", font=("Arial", 14))
         help_label.place(relx=1.0, rely=1.0, anchor="se", x=-10, y=-10)
         help_label.bind("<Button-1>", lambda e: webbrowser.open("https://github.com/alizangeneh"))
@@ -182,7 +182,7 @@ class PDFCompressorApp:
         files = [p for p in paths if p.lower().endswith(".pdf")]
         self.add_files(files)
 
-    # ---------- DPI ----------
+    # ---------- DPI Control ----------
     def update_dpi(self, text, val):
         if text == "Manual":
             self.slider.config(state="normal")

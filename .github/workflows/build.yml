@@ -11,35 +11,38 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [windows-latest, ubuntu-latest, macos-latest]
+        os: [windows-latest, macos-latest, ubuntu-latest]
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.11
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install pyinstaller py2app
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller
 
-      - name: Build executable
-        run: |
-          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-              pyinstaller --onefile main.py
-          elif [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
-              pyinstaller --onefile main.py
-          elif [[ "${{ matrix.os }}" == "macos-latest" ]]; then
-              python setup.py py2app
+    - name: Build executable
+      run: |
+        if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+          pyinstaller --onefile --name PDFCompressor main.py
+        elif [[ "${{ matrix.os }}" == "macos-latest" ]]; then
+          pip install py2app
+          python setup.py py2app
+        elif [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
+          pyinstaller --onefile --name PDFCompressor main.py
+        fi
 
-      - name: Upload Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: PDFCompressor-${{ matrix.os }}
-          path: |
-            dist/*
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: PDFCompressor-${{ matrix.os }}
+        path: |
+          dist/*
+          build/*
