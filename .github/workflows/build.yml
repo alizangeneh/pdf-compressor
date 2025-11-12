@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch:
+  pull_request:
 
 jobs:
   build:
@@ -14,35 +14,31 @@ jobs:
         os: [windows-latest, ubuntu-latest, macos-latest]
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: 3.11
+          python-version: '3.11'
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pyinstaller
-          pip install -r requirements.txt
-          if [[ "${{ matrix.os }}" == "macos-latest" ]]; then
-            pip install py2app
-          fi
+          pip install pyinstaller py2app Pillow pymupdf tkinterdnd2
 
       - name: Build Executable
         run: |
           if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-            pyinstaller --onefile main.py --name pdf-compressor.exe
+              pyinstaller --onefile main.py --name pdf-compressor.exe
           elif [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
-            pyinstaller --onefile main.py --name pdf-compressor
+              pyinstaller --onefile main.py --name pdf-compressor
           elif [[ "${{ matrix.os }}" == "macos-latest" ]]; then
-            python setup.py py2app
+              python setup.py py2app
+          fi
 
-      - name: Upload Artifacts
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: PDFCompressor-${{ matrix.os }}
+          name: pdf-compressor-${{ matrix.os }}
           path: |
             dist/*

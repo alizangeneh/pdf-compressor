@@ -1,19 +1,19 @@
 from setuptools import setup, find_packages
-import sys
 
-# تنظیمات macOS (py2app)
-APP = ['main.py'] if sys.platform == 'darwin' else []
+APP = ['main.py']
 OPTIONS = {
     'argv_emulation': True,
-    'packages': ['fitz', 'PIL', 'tkinterdnd2'],
+    'packages': ['PIL', 'fitz', 'tkinterdnd2'],
 }
 
 setup(
+    app=APP,
+    options={'py2app': OPTIONS},
+    setup_requires=['py2app'],
     name="pdf-compressor",
     version="1.0.0",
     author="Ali Zangeneh",
-    author_email="engineer.zangeneh@gmail.com",
-    description="Smart PDF compressor for both image and vector PDFs",
+    description="Smart PDF compressor for image and vector PDFs",
     long_description=open("README.md", encoding="utf-8").read(),
     long_description_content_type="text/markdown",
     url="https://github.com/alizangeneh/pdf-compressor",
@@ -24,13 +24,14 @@ setup(
         "Pillow>=10.0.0",
         "tkinterdnd2>=0.4.3"
     ],
-    app=APP,
-    options={'py2app': OPTIONS} if sys.platform == 'darwin' else {},
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
-        "Operating System :: OS Independent",
+        "Operating System :: MacOS",
+        "Operating System :: Microsoft :: Windows",
+        "Operating System :: POSIX :: Linux",
         "Topic :: Utilities",
+        "Intended Audience :: Developers",
     ],
     python_requires=">=3.9",
 )
