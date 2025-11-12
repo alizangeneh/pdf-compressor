@@ -11,38 +11,38 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [windows-latest, macos-latest, ubuntu-latest]
+        os: [windows-latest, ubuntu-latest, macos-latest]
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: "3.11"
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install pyinstaller
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller
+          pip install -r requirements.txt
+          if [[ "${{ matrix.os }}" == "macos-latest" ]]; then
+            pip install py2app
+          fi
 
-    - name: Build executable
-      run: |
-        if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-          pyinstaller --onefile --name PDFCompressor main.py
-        elif [[ "${{ matrix.os }}" == "macos-latest" ]]; then
-          pip install py2app
-          python setup.py py2app
-        elif [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
-          pyinstaller --onefile --name PDFCompressor main.py
-        fi
+      - name: Build Executable
+        run: |
+          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+            pyinstaller --onefile main.py --name pdf-compressor.exe
+          elif [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
+            pyinstaller --onefile main.py --name pdf-compressor
+          elif [[ "${{ matrix.os }}" == "macos-latest" ]]; then
+            python setup.py py2app
 
-    - name: Upload Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: PDFCompressor-${{ matrix.os }}
-        path: |
-          dist/*
-          build/*
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: PDFCompressor-${{ matrix.os }}
+          path: |
+            dist/*
