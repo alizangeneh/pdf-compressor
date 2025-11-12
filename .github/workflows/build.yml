@@ -1,13 +1,13 @@
-name: Build & Release Smart PDF Compressor
+name: Build PDF Compressor
 
 on:
   push:
     tags:
-      - "v*"
+      - 'v*.*.*'
+  workflow_dispatch:
 
 jobs:
   build:
-    name: Build executables for ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -18,55 +18,32 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v4
         with:
           python-version: "3.11"
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt || true
-          pip install pyinstaller
-          if [[ "${{ matrix.os }}" == "macos-latest" ]]; then
-            pip install py2app
-          fi
+          pip install PyMuPDF Pillow tkinterdnd2 pyinstaller py2app
 
       - name: Build executable
         shell: bash
         run: |
-          mkdir -p dist
           if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-            pyinstaller --onefile --windowed main.py -n PDFCompressor
+              pyinstaller --onefile main.py
+              cp dist/main.exe dist/PDFCompressor-windows.exe
           elif [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
-            pyinstaller --onefile main.py -n PDFCompressor
+              pyinstaller --onefile main.py
+              cp dist/main dist/PDFCompressor-linux
           elif [[ "${{ matrix.os }}" == "macos-latest" ]]; then
-            python setup.py py2app --app=main.py
+              python setup.py py2app
+              cp -r dist/*.app dist/PDFCompressor-macos.app
           fi
 
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+      - name: Upload executables to GitHub Release
+        uses: softprops/action-gh-release@v1
         with:
-          name: PDFCompressor-${{ matrix.os }}
-          path: |
-            dist/**
-            build/**
-
-  release:
-    name: Create GitHub Release
-    needs: build
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-
-    steps:
-      - name: Download all build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: ./dist
-
-      - name: Create Release and Upload Files
-        uses: softprops/action-gh-release@v2
-        with:
-          files: dist/**/* 
+          files: "dist/*"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
