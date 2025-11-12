@@ -1,10 +1,20 @@
 from setuptools import setup, find_packages
 
+# ----------------------------
+# Main script for macOS py2app
+APP = ["main.py"]
+DATA_FILES = []
+OPTIONS = {
+    "argv_emulation": True,
+    "packages": ["fitz", "PIL", "tkinterdnd2", "io", "subprocess", "threading", "tkinter", "webbrowser"],
+}
+
+# ----------------------------
 setup(
     name="pdf-compressor",
     version="1.0.0",
     author="Ali Zangeneh",
-    author_email="your_email@example.com",  # optional
+    author_email="engineer.zangeneh@gmail.com",  # Optional
     description="Smart PDF compressor for both image and vector PDFs",
     long_description=open("README.md", encoding="utf-8").read(),
     long_description_content_type="text/markdown",
@@ -19,9 +29,15 @@ setup(
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
-        "Operating System :: OS Independent",
+        "Operating System :: MacOS",
+        "Operating System :: Microsoft :: Windows",
+        "Operating System :: POSIX :: Linux",
         "Topic :: Utilities",
         "Intended Audience :: Developers",
     ],
     python_requires=">=3.9",
+    # For macOS py2app
+    app=APP,
+    data_files=DATA_FILES,
+    options={"py2app": OPTIONS},
 )
