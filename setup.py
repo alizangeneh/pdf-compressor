@@ -1,18 +1,13 @@
 from setuptools import setup
 
+APP = ['main.py']
+OPTIONS = {
+    'argv_emulation': True,
+    'packages': ['fitz', 'PIL', 'tkinterdnd2', 'ghostscript'],
+}
+
 setup(
-    app=['main.py'],  # فایل اصلی پروژه
+    app=APP,
+    options={'py2app': OPTIONS},
     setup_requires=['py2app'],
-    install_requires=[
-        "PyMuPDF==1.26.6",
-        "Pillow==11.0.0",
-        "tkinterdnd2==0.4.3",
-        "ghostscript==0.7"
-    ],
-    options={
-        'py2app': {
-            'argv_emulation': True,
-            'packages': ['fitz', 'PIL', 'tkinterdnd2']
-        }
-    },
 )
