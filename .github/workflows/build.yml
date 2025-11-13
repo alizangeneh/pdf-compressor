@@ -1,12 +1,9 @@
-name: Build PDF Compressor
+name: Build & Release PDF Compressor
 
 on:
   push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+    tags:
+      - 'v*'  # فقط وقتی Tag ایجاد شد اجرا می‌شود
 
 jobs:
   build:
@@ -31,22 +28,42 @@ jobs:
 
       - name: Build executable on Windows
         if: matrix.os == 'windows-latest'
-        run: |
-          pyinstaller --onefile main.py
+        run: pyinstaller --onefile main.py
 
       - name: Build executable on macOS
         if: matrix.os == 'macos-latest'
-        run: |
-          python setup.py py2app
+        run: python setup.py py2app
 
       - name: Build executable on Ubuntu
         if: matrix.os == 'ubuntu-latest'
-        run: |
-          pyinstaller --onefile main.py
+        run: pyinstaller --onefile main.py
 
-      # ⚡ استفاده از نسخه جدید Upload Artifact (v4)
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: pdf-compressor-${{ matrix.os }}
           path: dist/*
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload binaries to Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            dist/*.exe
+            dist/*.app
+            dist/*.bin
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
