@@ -1,22 +1,23 @@
-name: Build and Release
+name: Build PDF Compressor
 
 on:
   push:
     branches:
       - main
-    tags:
-      - 'v*'
+  pull_request:
+    branches:
+      - main
 
 jobs:
   build:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [windows-latest, macos-latest, ubuntu-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest]
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v3
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -27,35 +28,24 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install py2app pyinstaller
 
-      - name: Build executable
+      - name: Build executable on Windows
+        if: matrix.os == 'windows-latest'
         run: |
-          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-            pyinstaller --onefile main.py
-          elif [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
-            pyinstaller --onefile main.py
-          elif [[ "${{ matrix.os }}" == "macos-latest" ]]; then
-            python setup.py py2app
-          fi
+          pyinstaller --onefile main.py
 
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+      - name: Build executable on macOS
+        if: matrix.os == 'macos-latest'
+        run: |
+          python setup.py py2app
+
+      - name: Build executable on Ubuntu
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          pyinstaller --onefile main.py
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v3
         with:
           name: pdf-compressor-${{ matrix.os }}
-          path: |
-            dist/*
-
-  release:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: dist/*
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          path: dist/*
