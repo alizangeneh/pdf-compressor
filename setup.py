@@ -1,10 +1,10 @@
 from setuptools import setup
 
-APP = ['main.py']
+APP = ['main.py']  # فایل اصلی پروژه
 DATA_FILES = []
 OPTIONS = {
     'argv_emulation': True,
-    'packages': ['PyMuPDF', 'Pillow', 'tkinterdnd2', 'ghostscript'],
+    'packages': ['fitz', 'PIL', 'tkinterdnd2', 'ghostscript'],  # fitz نام داخلی PyMuPDF است
 }
 
 setup(
