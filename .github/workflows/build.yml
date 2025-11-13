@@ -1,21 +1,22 @@
-name: Build PDF Compressor
+name: Build and Release
 
 on:
   push:
+    branches:
+      - main          # اجرا روی هر push به main
     tags:
-      - 'v*'
-  workflow_dispatch:
+      - 'v*'          # اجرا روی تگ‌هایی که با v شروع می‌شوند
+  workflow_dispatch:  # امکان اجرای دستی
 
 jobs:
   build:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [windows-latest, ubuntu-latest, macos-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest]
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v3
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -25,30 +26,31 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          if [ "${{ matrix.os }}" = "windows-latest" ]; then
-            pip install -r requirements.txt
-          elif [ "${{ matrix.os }}" = "ubuntu-latest" ]; then
-            pip install -r requirements.txt
-          elif [ "${{ matrix.os }}" = "macos-latest" ]; then
-            pip install PyMuPDF==1.26.6 Pillow==11.0.0 tkinterdnd2==0.4.3 ghostscript==0.7
-          fi
+          pip install -r requirements.txt
+          pip install py2app pyinstaller
 
       - name: Build executable
         run: |
-          if [ "${{ matrix.os }}" = "windows-latest" ]; then
-            pyinstaller --onefile main.py
-          elif [ "${{ matrix.os }}" = "ubuntu-latest" ]; then
-            pyinstaller --onefile main.py
-          elif [ "${{ matrix.os }}" = "macos-latest" ]; then
+          if [ "${{ matrix.os }}" == "macos-latest" ]; then
             python setup.py py2app
+          elif [ "${{ matrix.os }}" == "windows-latest" ]; then
+            pyinstaller --onefile main.py
+          else
+            pyinstaller --onefile main.py
+          fi
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: pdf-compressor-${{ matrix.os }}
+          name: ${{ matrix.os }}-executable
           path: |
             dist/*
 
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
