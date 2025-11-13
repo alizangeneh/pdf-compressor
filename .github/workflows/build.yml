@@ -1,10 +1,11 @@
-name: Build PDF Compressor
+name: Build and Release PDF Compressor
 
 on:
   push:
+    branches:
+      - main
     tags:
-      - 'v*.*.*'
-  workflow_dispatch:
+      - "v*"
 
 jobs:
   build:
@@ -14,24 +15,26 @@ jobs:
         os: [windows-latest, ubuntu-latest, macos-latest]
 
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install PyMuPDF Pillow tkinterdnd2 pyinstaller py2app
+          pip install -r requirements.txt
+          pip install pyinstaller py2app
 
       - name: Build executable
         shell: bash
         run: |
+          mkdir -p dist
           if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-              pyinstaller --onefile main.py
+              pyinstaller --onefile --noconsole main.py
               cp dist/main.exe dist/PDFCompressor-windows.exe
           elif [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
               pyinstaller --onefile main.py
@@ -41,9 +44,29 @@ jobs:
               cp -r dist/*.app dist/PDFCompressor-macos.app
           fi
 
-      - name: Upload executables to GitHub Release
-        uses: softprops/action-gh-release@v1
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
         with:
-          files: "dist/*"
+          name: PDFCompressor-${{ matrix.os }}
+          path: dist/*
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: "PDF Compressor ${{ github.ref_name }}"
+          files: dist/**/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
