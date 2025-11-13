@@ -1,16 +1,23 @@
 from setuptools import setup
 
-APP = ['src/pdf_compressor.py']  # فایل اصلی برنامه (GUI و main loop)
+APP = ['main.py']  # فایل اصلی برنامه
 DATA_FILES = []
 OPTIONS = {
     'argv_emulation': True,
-    'packages': ['Pillow', 'PyMuPDF', 'tkinterdnd2', 'ghostscript'],
-    'includes': ['tkinter', 'os'],
+    'packages': ['PyMuPDF', 'Pillow', 'tkinterdnd2', 'ghostscript'],
 }
 
 setup(
     app=APP,
-    data_files=DATA_FILES,
+    name='PDFCompressor',
+    version='1.0',
+    description='PDF Compressor with GUI',
     options={'py2app': OPTIONS},
     setup_requires=['py2app'],
+    install_requires=[
+        'PyMuPDF==1.26.6',
+        'Pillow==11.0.0',
+        'tkinterdnd2==0.4.3',
+        'ghostscript==0.7'
+    ],
 )
